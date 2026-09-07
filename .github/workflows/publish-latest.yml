@@ -1,0 +1,33 @@
+name: Publish latest release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'devpilot/__main__.py'
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create v0.7.0 tag once
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git ls-remote --exit-code --tags origin refs/tags/v0.7.0 >/dev/null 2>&1; then
+            echo "v0.7.0 already exists; nothing to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a v0.7.0 -m "DevPilot v0.7.0"
+          git push origin v0.7.0
