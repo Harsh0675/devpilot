@@ -25,9 +25,6 @@ jobs:
           - name: Linux x64
             os: ubuntu-latest
             artifact: devpilot-linux-x64
-          - name: macOS Intel
-            os: macos-13
-            artifact: devpilot-macos-x64
           - name: macOS Apple Silicon
             os: macos-14
             artifact: devpilot-macos-arm64
