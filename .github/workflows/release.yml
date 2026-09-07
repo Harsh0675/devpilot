@@ -45,9 +45,12 @@ jobs:
           python -m compileall -q devpilot
           python -m devpilot --version
           python -m devpilot --help
+          python -m devpilot.agent_cli --help
 
-      - name: Build executable
-        run: pyinstaller --clean --noconfirm --onefile --name devpilot devpilot/__main__.py
+      - name: Build executables
+        run: |
+          pyinstaller --clean --noconfirm --onefile --name devpilot devpilot/__main__.py
+          pyinstaller --clean --noconfirm --onefile --name devpilot-agent devpilot/agent_cli.py
 
       - name: Package Windows
         if: runner.os == 'Windows'
@@ -55,6 +58,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force package | Out-Null
           Copy-Item dist/devpilot.exe package/devpilot.exe
+          Copy-Item dist/devpilot-agent.exe package/devpilot-agent.exe
           Copy-Item README.md package/README.md
           Compress-Archive -Path package/* -DestinationPath devpilot-windows-x64.zip
           Get-FileHash devpilot-windows-x64.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  devpilot-windows-x64.zip" } | Set-Content SHA256SUMS-windows.txt
@@ -65,7 +69,8 @@ jobs:
         run: |
           mkdir -p package
           cp dist/devpilot package/devpilot
-          chmod 755 package/devpilot
+          cp dist/devpilot-agent package/devpilot-agent
+          chmod 755 package/devpilot package/devpilot-agent
           cp README.md package/README.md
           tar -czf devpilot-linux-x64.tar.gz -C package .
           sha256sum devpilot-linux-x64.tar.gz > SHA256SUMS-linux.txt
