@@ -22,6 +22,7 @@ jobs:
       - run: python -m compileall -q devpilot
       - run: python -m devpilot --version
       - run: python -m devpilot --help
+      - run: python -m devpilot.agent_cli --help
       - run: python -m devpilot scan
       - run: python -m devpilot index
 
@@ -36,6 +37,7 @@ jobs:
       - run: python -m pip install -e .
       - run: python -m devpilot --version
       - run: python -m devpilot doctor
+      - run: python -m devpilot.agent_cli --help
 
   linux-package:
     name: Linux package smoke test
@@ -47,4 +49,6 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install . pyinstaller
       - run: pyinstaller --clean --noconfirm --onefile --name devpilot devpilot/__main__.py
+      - run: pyinstaller --clean --noconfirm --onefile --name devpilot-agent devpilot/agent_cli.py
       - run: ./dist/devpilot --version
+      - run: ./dist/devpilot-agent --help
