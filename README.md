@@ -1,6 +1,6 @@
 # 🚀 DevPilot
 
-**DevPilot v0.4.0** is an online AI-assisted autonomous developer CLI for understanding projects, searching code, proposing safe code changes, and working with Android/Gradle builds.
+**DevPilot v0.5.0** is an online AI-assisted autonomous developer CLI for understanding projects, searching code, proposing safe code changes, and working with Android/Gradle builds.
 
 ## ✨ Features
 
