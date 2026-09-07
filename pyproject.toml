@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devpilot"
-version = "0.6.1"
-description = "Production-grade AI coding copilot for Windows and Linux."
+version = "0.7.0"
+description = "Industry-grade multi-agent AI software engineering platform for Windows and Linux."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
@@ -13,6 +13,7 @@ authors = [{name = "Harsh Nagar"}]
 
 [project.scripts]
 devpilot = "devpilot.cli:main"
+devpilot-agent = "devpilot.agent_cli:main"
 
 [tool.setuptools.packages.find]
 include = ["devpilot*"]
