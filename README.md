@@ -1,9 +1,11 @@
 # 🚀 DevPilot
 
-**DevPilot v0.6.0** is a production-oriented AI coding copilot for developers who want project intelligence, safe AI-generated changes, testing, diagnostics, and build automation from the terminal.
+**DevPilot v0.6.0** is a production-oriented AI coding copilot for **Windows and Linux desktop/server environments**. It provides project intelligence, safe AI-generated changes, testing, diagnostics, and build automation from the command line.
 
 ## ✨ Production Copilot Features
 
+- 🪟 Native Windows x64 executable release
+- 🐧 Native Linux x64 executable release
 - 🌐 OpenAI-compatible online AI providers
 - 🧠 Project-aware context retrieval with bounded context size
 - 📚 Lightweight local project indexing
@@ -15,38 +17,56 @@
 - 🔐 Explicit human approval for file writes by default
 - ✅ Patch validation with `git apply --check`
 - 🧪 Test runner with Gradle/Python detection
-- 🏗️ Android/Gradle build automation
+- 🏗️ Build automation
 - 🩺 Environment diagnostics with `doctor`
 - 📊 Git working-tree visibility with `status` and `diff`
 - 🧾 AI build-log explanation with `explain`
 - ⚙️ Persistent model/provider/permission configuration
-- 📴 Local inspection works without AI
-- 📱 Termux-friendly CLI
-- 🪟 Windows + 🐧 Linux release binaries
+- 🔒 No API keys stored in project files
 
-## Install
+## Installation
 
-From source:
+### Windows
+
+Download `devpilot-windows-x64.zip` from GitHub Releases, extract it, and run `devpilot.exe` from PowerShell or Command Prompt.
+
+### Linux
+
+Download `devpilot-linux-x64.tar.gz`, extract it, make the binary executable if required, and run:
+
+```bash
+./devpilot --version
+```
+
+### From source
+
+Python 3.9+ is supported for source installation:
 
 ```bash
 python -m pip install -e .
 ```
 
-Prebuilt Windows/Linux packages are published in GitHub Releases.
-
 ## Online AI setup
 
-DevPilot never stores your API key in the repository. Set it as an environment variable:
+Set your API key as an environment variable. DevPilot does not write it into the repository:
+
+### Windows PowerShell
+
+```powershell
+$env:DEVPILOT_API_KEY="your-api-key"
+```
+
+### Linux
 
 ```bash
 export DEVPILOT_API_KEY="your-api-key"
 ```
 
-OpenAI-compatible providers can be configured with:
+OpenAI-compatible providers can also be configured with:
 
-```bash
-export DEVPILOT_BASE_URL="https://api.openai.com/v1"
-export DEVPILOT_MODEL="gpt-4o-mini"
+```text
+DEVPILOT_BASE_URL=https://api.openai.com/v1
+DEVPILOT_MODEL=gpt-4o-mini
 ```
 
 Or persist non-secret configuration locally:
@@ -92,8 +112,6 @@ The patch is saved to `.devpilot/proposed.patch`; **no files are changed** until
 devpilot apply
 ```
 
-DevPilot validates the patch before application. `--apply` is available when you intentionally want the fix workflow to continue to application.
-
 ## Verify changes
 
 ```bash
@@ -101,8 +119,6 @@ devpilot diff
 devpilot test
 devpilot build
 ```
-
-Commands that execute builds/tests require confirmation by default. Use `-y` only when you intentionally want non-interactive execution.
 
 ## Commands
 
@@ -122,7 +138,7 @@ Commands that execute builds/tests require confirmation by default. Use `-y` onl
 | `test` | Run detected tests |
 | `explain` | Analyze a build/error log |
 | `doctor` | Check the development environment |
-| `build` | Build an Android/Gradle project |
+| `build` | Build a supported project |
 | `config` | Configure model, provider URL, and permissions |
 
 ## Security model
@@ -136,11 +152,9 @@ DevPilot follows a conservative local-agent model:
 5. Command execution and file-write permissions require explicit approval by default.
 6. Generated changes remain reviewable through normal Git tooling.
 
-## Release
+## Releases
 
-Current release: **v0.6.0**.
-
-Windows x64 and Linux x64 binaries are produced through GitHub Actions for tagged releases.
+Windows x64 and Linux x64 binaries are built automatically through GitHub Actions for tagged releases.
 
 ## License
 
