@@ -6,8 +6,10 @@ on:
 
 jobs:
   python:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.9', '3.11', '3.13']
     steps:
@@ -15,7 +17,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e .
       - run: python -m compileall -q devpilot
+      - run: python -m devpilot --version
       - run: python -m devpilot --help
       - run: python -m devpilot scan
       - run: python -m devpilot index
+
+  windows:
+    name: Windows smoke test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e .
+      - run: python -m devpilot --version
+      - run: python -m devpilot doctor
+
+  linux-package:
+    name: Linux package smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install . pyinstaller
+      - run: pyinstaller --clean --noconfirm --onefile --name devpilot devpilot/__main__.py
+      - run: ./dist/devpilot --version
