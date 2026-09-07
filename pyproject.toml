@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devpilot"
-version = "0.4.0"
+version = "0.5.0"
 description = "Online AI autonomous developer agent for project intelligence, safe code changes, and build automation."
 readme = "README.md"
 requires-python = ">=3.9"
