@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devpilot"
-version = "0.1.0"
-description = "AI-assisted developer CLI for project intelligence and safe automation."
+version = "0.2.0"
+description = "Online AI-assisted developer agent for project intelligence and safe automation."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
