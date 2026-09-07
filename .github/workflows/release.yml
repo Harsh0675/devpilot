@@ -107,8 +107,11 @@ jobs:
           cp dist/devpilot-agent package/usr/bin/devpilot-agent
           chmod 755 package/usr/bin/devpilot package/usr/bin/devpilot-agent
           cp README.md package/README.md
-          printf '%s\n' '[Desktop Entry]' 'Name=DevPilot' 'Exec=devpilot' 'Type=Application' 'Categories=Development;' > package/usr/share/applications/devpilot.desktop
+          printf '%s\n' '[Desktop Entry]' 'Name=DevPilot' 'Exec=devpilot' 'Type=Application' 'Categories=Development;' 'Icon=devpilot' > package/usr/share/applications/devpilot.desktop
           cp package/usr/share/applications/devpilot.desktop package/devpilot.desktop
+          cat > package/devpilot.svg <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" rx="48" fill="#111827"/><path d="M72 72h112v32H104v24h64v32h-64v24h80v32H72z" fill="#fff"/></svg>
+          EOF
           printf '%s\n' '#!/bin/sh' 'HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"' 'exec "$HERE/usr/bin/devpilot" "$@"' > package/AppRun
           chmod 755 package/AppRun
           cat > install.sh <<'EOF'
