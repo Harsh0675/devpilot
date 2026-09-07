@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [{name = "Harsh Nagar"}]
 
 [project.scripts]
-devpilot = "devpilot.cli:main"
+devpilot = "devpilot.versioned_cli:main"
 devpilot-agent = "devpilot.agent_cli:main"
 
 [tool.setuptools.packages.find]
