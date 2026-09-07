@@ -7,10 +7,15 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.13']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
+      - run: python -m compileall -q devpilot
       - run: python -m devpilot --help
       - run: python -m devpilot scan
+      - run: python -m devpilot index
