@@ -1,31 +1,37 @@
 name: Build and release DevPilot
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}
+    name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - name: Windows x64
+            os: windows-latest
             artifact: devpilot-windows-x64
-            archive: devpilot-windows-x64.zip
-          - os: ubuntu-latest
+          - name: Linux x64
+            os: ubuntu-latest
             artifact: devpilot-linux-x64
-            archive: devpilot-linux-x64.tar.gz
+          - name: macOS Intel
+            os: macos-13
+            artifact: devpilot-macos-x64
+          - name: macOS Apple Silicon
+            os: macos-14
+            artifact: devpilot-macos-arm64
 
     steps:
-      - name: Checkout tagged source
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -52,44 +58,116 @@ jobs:
           pyinstaller --clean --noconfirm --onefile --name devpilot devpilot/__main__.py
           pyinstaller --clean --noconfirm --onefile --name devpilot-agent devpilot/agent_cli.py
 
-      - name: Package Windows
+      - name: Windows installer
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force package | Out-Null
-          Copy-Item dist/devpilot.exe package/devpilot.exe
-          Copy-Item dist/devpilot-agent.exe package/devpilot-agent.exe
-          Copy-Item README.md package/README.md
-          Compress-Archive -Path package/* -DestinationPath devpilot-windows-x64.zip
-          Get-FileHash devpilot-windows-x64.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  devpilot-windows-x64.zip" } | Set-Content SHA256SUMS-windows.txt
+          choco install innosetup --no-progress -y
+          New-Item -ItemType Directory -Force installer | Out-Null
+          Copy-Item dist/devpilot.exe installer/devpilot.exe
+          Copy-Item dist/devpilot-agent.exe installer/devpilot-agent.exe
+          $version = (Select-String -Path pyproject.toml -Pattern 'version = "([^"]+)"').Matches.Groups[1].Value
+          @"
+          [Setup]
+          AppId={{B5C3B7C6-5E35-4E8C-9B8C-DEVPILOT0700}}
+          AppName=DevPilot
+          AppVersion=$version
+          AppPublisher=Harsh Nagar
+          DefaultDirName={autopf}\DevPilot
+          DefaultGroupName=DevPilot
+          OutputDir=installer
+          OutputBaseFilename=DevPilot-$version-windows-x64-setup
+          ArchitecturesInstallIn64BitMode=x64
+          UninstallDisplayIcon={app}\devpilot.exe
+          Compression=lzma
+          SolidCompression=yes
+          [Files]
+          Source: "installer\devpilot.exe"; DestDir: "{app}"; Flags: ignoreversion
+          Source: "installer\devpilot-agent.exe"; DestDir: "{app}"; Flags: ignoreversion
+          [Icons]
+          Name: "{group}\DevPilot"; Filename: "{app}\devpilot.exe"
+          Name: "{group}\DevPilot Agent"; Filename: "{app}\devpilot-agent.exe"
+          [Run]
+          Filename: "{app}\devpilot.exe"; Description: "Launch DevPilot"; Flags: nowait postinstall skipifsilent
+          "@ | Set-Content installer/devpilot.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/devpilot.iss
+          Compress-Archive -Path installer/devpilot.exe,installer/devpilot-agent.exe -DestinationPath DevPilot-$version-windows-x64.zip
+          Get-FileHash installer/DevPilot-$version-windows-x64-setup.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  DevPilot-$version-windows-x64-setup.exe" } | Set-Content SHA256SUMS-windows.txt
+          Get-FileHash DevPilot-$version-windows-x64.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  DevPilot-$version-windows-x64.zip" } | Add-Content SHA256SUMS-windows.txt
 
-      - name: Package Linux
+      - name: Linux AppImage and tarball
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          mkdir -p package
-          cp dist/devpilot package/devpilot
-          cp dist/devpilot-agent package/devpilot-agent
-          chmod 755 package/devpilot package/devpilot-agent
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          mkdir -p package/usr/bin package/usr/share/applications
+          cp dist/devpilot package/usr/bin/devpilot
+          cp dist/devpilot-agent package/usr/bin/devpilot-agent
+          chmod 755 package/usr/bin/devpilot package/usr/bin/devpilot-agent
           cp README.md package/README.md
-          tar -czf devpilot-linux-x64.tar.gz -C package .
-          sha256sum devpilot-linux-x64.tar.gz > SHA256SUMS-linux.txt
+          printf '%s\n' '[Desktop Entry]' 'Name=DevPilot' 'Exec=devpilot' 'Type=Application' 'Categories=Development;' > package/usr/share/applications/devpilot.desktop
+          printf '%s\n' '#!/bin/sh' 'HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"' 'exec "$HERE/usr/bin/devpilot" "$@"' > package/AppRun
+          chmod 755 package/AppRun
+          tar -czf DevPilot-$VERSION-linux-x64.tar.gz -C package .
+          curl -L --fail --retry 3 -o appimagetool.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool.AppImage
+          ARCH=x86_64 ./appimagetool.AppImage package DevPilot-$VERSION-linux-x64.AppImage
+          sha256sum DevPilot-$VERSION-linux-x64.tar.gz DevPilot-$VERSION-linux-x64.AppImage > SHA256SUMS-linux.txt
 
-      - name: Upload CI package
+      - name: macOS DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          mkdir -p "DevPilot.app/Contents/MacOS"
+          cp dist/devpilot "DevPilot.app/Contents/MacOS/devpilot"
+          cp dist/devpilot-agent "DevPilot.app/Contents/MacOS/devpilot-agent"
+          chmod 755 "DevPilot.app/Contents/MacOS/devpilot" "DevPilot.app/Contents/MacOS/devpilot-agent"
+          cat > "DevPilot.app/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+          <key>CFBundleName</key><string>DevPilot</string>
+          <key>CFBundleDisplayName</key><string>DevPilot</string>
+          <key>CFBundleIdentifier</key><string>com.harshnagar.devpilot</string>
+          <key>CFBundleVersion</key><string>$VERSION</string>
+          <key>CFBundleShortVersionString</key><string>$VERSION</string>
+          <key>CFBundlePackageType</key><string>APPL</string>
+          <key>CFBundleExecutable</key><string>devpilot</string>
+          </dict></plist>
+          EOF
+          hdiutil create -volname "DevPilot $VERSION" -srcfolder DevPilot.app -ov -format UDZO "DevPilot-$VERSION-${{ matrix.artifact }}.dmg"
+          tar -czf "DevPilot-$VERSION-${{ matrix.artifact }}.tar.gz" DevPilot.app
+          shasum -a 256 "DevPilot-$VERSION-${{ matrix.artifact }}.dmg" "DevPilot-$VERSION-${{ matrix.artifact }}.tar.gz" > SHA256SUMS-macos-${{ matrix.artifact }}.txt
+
+      - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: |
-            ${{ matrix.archive }}
+            DevPilot-*.zip
+            DevPilot-*.tar.gz
+            DevPilot-*.AppImage
+            DevPilot-*.dmg
+            installer/*.exe
             SHA256SUMS-*.txt
           if-no-files-found: error
           retention-days: 30
 
-      - name: Attach release assets
-        if: startsWith(github.ref, 'refs/tags/')
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            ${{ matrix.archive }}
-            SHA256SUMS-*.txt
+          files: release-assets/**
           generate_release_notes: true
+          fail_on_unmatched_files: true
