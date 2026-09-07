@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-from devpilot.agents import AgentOrchestrator
+from devpilot.agents import AgentOrchestrator, AutonomousAgent
 from devpilot.llm import PROVIDERS
 
 IGNORE = {'.git', '.gradle', '.idea', 'build', '.devpilot', '__pycache__', '.venv', 'node_modules', 'dist', '.tox'}
@@ -35,16 +35,21 @@ def context(question, root=None, limit=18, max_chars=70000):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='devpilot-agent', description='DevPilot multi-agent software engineering pipeline.')
+    parser = argparse.ArgumentParser(prog='devpilot-agent', description='DevPilot autonomous multi-agent software engineering platform.')
     parser.add_argument('request', nargs='+')
     parser.add_argument('--provider', default=None, help='openai-compatible, anthropic, gemini, ollama, or compatible provider alias')
     parser.add_argument('--model', default=None)
     parser.add_argument('--base-url', default=None)
     parser.add_argument('--json', action='store_true')
+    parser.add_argument('--autonomous', action='store_true', help='run the bounded autonomous engineering loop')
+    parser.add_argument('--max-steps', type=int, default=4, help='autonomous loop steps (1-8)')
     args = parser.parse_args()
     request = ' '.join(args.request).strip()
     ctx = context(request)
-    results = AgentOrchestrator().run(request, ctx, model=args.model, provider=args.provider, base_url=args.base_url)
+    if args.autonomous:
+        results = AutonomousAgent(max_steps=args.max_steps).run(request, ctx, model=args.model, provider=args.provider, base_url=args.base_url)
+    else:
+        results = AgentOrchestrator().run(request, ctx, model=args.model, provider=args.provider, base_url=args.base_url)
     if args.json:
         print(json.dumps([r.__dict__ for r in results], indent=2))
     else:
