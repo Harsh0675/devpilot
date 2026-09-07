@@ -1,10 +1,26 @@
 # 🚀 DevPilot
 
-**DevPilot v0.7.0** is an industry-oriented AI software-engineering platform for **Windows and Linux desktop/server environments**. It combines project intelligence, safe code changes, multi-agent workflows, and a provider-neutral LLM runtime.
+**DevPilot v0.7.0** is an industry-oriented multi-agent AI software-engineering platform for **Windows, Linux, and macOS**. It combines project intelligence, safe code changes, multi-agent workflows, and a provider-neutral LLM runtime.
+
+## ⬇️ Download
+
+**Latest releases:** https://github.com/Harsh0675/devpilot/releases/latest
+
+### Desktop installers
+
+| Platform | Package |
+|---|---|
+| Windows x64 | `DevPilot-<version>-windows-x64-setup.exe` |
+| Linux x64 | `DevPilot-<version>-linux-x64.AppImage` |
+| Linux x64 | `DevPilot-<version>-linux-x64.tar.gz` |
+| macOS Intel | `DevPilot-<version>-devpilot-macos-x64.dmg` |
+| macOS Apple Silicon | `DevPilot-<version>-devpilot-macos-arm64.dmg` |
+
+All release packages include both **DevPilot** and **DevPilot Agent**. SHA-256 checksum files are published with every release.
 
 ## 🤖 Multi-Agent Engineering
 
-DevPilot now includes a deterministic production pipeline:
+DevPilot includes a deterministic production pipeline:
 
 **Planner → Coder → Reviewer → Tester**
 
@@ -37,36 +53,12 @@ DevPilot uses a lightweight HTTP runtime with no mandatory vendor SDK dependency
 
 The same interface can be used with compatible services such as OpenRouter, Groq, Together, Mistral, DeepSeek, Qwen-compatible endpoints, and self-hosted gateways by changing the base URL/model.
 
-Examples:
-
-```bash
-# OpenAI-compatible
-$env:DEVPILOT_PROVIDER="openai-compatible"
-$env:DEVPILOT_API_KEY="your-key"
-$env:DEVPILOT_MODEL="your-model"
-$env:DEVPILOT_BASE_URL="https://api.openai.com/v1"
-
-# Ollama
-$env:DEVPILOT_PROVIDER="ollama"
-$env:DEVPILOT_MODEL="qwen3-coder"
-
-# Anthropic
-$env:DEVPILOT_PROVIDER="anthropic"
-$env:ANTHROPIC_API_KEY="your-key"
-$env:DEVPILOT_MODEL="your-model"
-
-# Gemini
-$env:DEVPILOT_PROVIDER="gemini"
-$env:GEMINI_API_KEY="your-key"
-$env:DEVPILOT_MODEL="your-model"
-```
-
-Linux uses the same variables with `export`.
-
 ## ✨ Production Capabilities
 
-- 🪟 Windows x64 packaging
-- 🐧 Linux x64 packaging
+- 🪟 Windows x64 installer
+- 🐧 Linux x64 AppImage + tarball
+- 🍎 macOS Intel DMG
+- 🍎 macOS Apple Silicon DMG
 - 🤖 Multi-agent engineering pipeline
 - 🧠 Provider-neutral LLM runtime
 - 🌐 Cloud and local model support
@@ -99,16 +91,22 @@ devpilot build
 
 ### Windows
 
-Download the Windows x64 release package, extract it, and run `devpilot.exe` or `devpilot-agent.exe`.
+Run the `DevPilot-<version>-windows-x64-setup.exe` installer. It installs both `devpilot.exe` and `devpilot-agent.exe` and creates Start Menu shortcuts.
 
 ### Linux
 
-Download the Linux x64 release package and run:
+For AppImage:
 
 ```bash
-./devpilot --version
-./devpilot-agent "Review this project"
+chmod +x DevPilot-<version>-linux-x64.AppImage
+./DevPilot-<version>-linux-x64.AppImage
 ```
+
+The tarball contains the same standalone executables.
+
+### macOS
+
+Open the matching `.dmg` for Intel or Apple Silicon and copy `DevPilot.app` to Applications. The application bundle contains both DevPilot executables.
 
 ### From source
 
@@ -127,7 +125,7 @@ python -m pip install -e .
 
 ## Releases
 
-Windows x64 and Linux x64 packages are built automatically by GitHub Actions for tagged releases.
+Tagged releases automatically build native Windows, Linux, and macOS packages using GitHub Actions and publish SHA-256 checksums.
 
 ## License
 
