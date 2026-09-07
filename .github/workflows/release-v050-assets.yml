@@ -1,0 +1,64 @@
+name: Release v0.5.0 packages
+
+on:
+  push:
+    paths:
+      - '.github/workflows/release-v050-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }} package
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            archive: devpilot-windows-x64.zip
+          - os: ubuntu-latest
+            archive: devpilot-linux-x64.tar.gz
+
+    steps:
+      - name: Checkout v0.5.0
+        uses: actions/checkout@v4
+        with:
+          ref: v0.5.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Build executable
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller .
+          pyinstaller --onefile --name devpilot devpilot/__main__.py
+
+      - name: Create Windows archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item dist/devpilot.exe package/devpilot.exe
+          Copy-Item README.md package/README.md
+          Compress-Archive -Path package/* -DestinationPath devpilot-windows-x64.zip
+
+      - name: Create Linux archive
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p package
+          cp dist/devpilot package/devpilot
+          chmod +x package/devpilot
+          cp README.md package/README.md
+          tar -czf devpilot-linux-x64.tar.gz -C package .
+
+      - name: Upload package to v0.5.0 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release upload v0.5.0 "${{ matrix.archive }}" --clobber
