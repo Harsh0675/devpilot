@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from devpilot.agents import AgentOrchestrator, AutonomousAgent
-from devpilot.llm import PROVIDERS
+from devpilot.executor import AutonomousExecutor
 
 IGNORE = {'.git', '.gradle', '.idea', 'build', '.devpilot', '__pycache__', '.venv', 'node_modules', 'dist', '.tox'}
 EXTENSIONS = {'.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.kt', '.kts', '.xml', '.json', '.md', '.txt', '.gradle', '.properties', '.yml', '.yaml', '.toml', '.sh', '.c', '.cpp', '.h', '.hpp', '.rs', '.go', '.swift', '.dart', '.sql'}
@@ -36,14 +36,31 @@ def context(question, root=None, limit=18, max_chars=70000):
 
 def main():
     parser = argparse.ArgumentParser(prog='devpilot-agent', description='DevPilot autonomous multi-agent software engineering platform.')
-    parser.add_argument('request', nargs='+')
-    parser.add_argument('--provider', default=None, help='openai-compatible, anthropic, gemini, ollama, or compatible provider alias')
+    parser.add_argument('request', nargs='*')
+    parser.add_argument('--provider', default=None)
     parser.add_argument('--model', default=None)
     parser.add_argument('--base-url', default=None)
     parser.add_argument('--json', action='store_true')
     parser.add_argument('--autonomous', action='store_true', help='run the bounded autonomous engineering loop')
+    parser.add_argument('--execute', action='store_true', help='apply .devpilot/proposed.patch and optionally verify it')
+    parser.add_argument('--allow-write', action='store_true', help='explicitly allow file changes during execution')
+    parser.add_argument('--allow-commands', action='store_true', help='explicitly allow test/build commands during execution')
+    parser.add_argument('--test-command', default=None, help='test command to run after applying the patch')
+    parser.add_argument('--build-command', default=None, help='build command to run after applying the patch')
     parser.add_argument('--max-steps', type=int, default=4, help='autonomous loop steps (1-8)')
     args = parser.parse_args()
+
+    if args.execute:
+        results = AutonomousExecutor(allow_write=args.allow_write, allow_commands=args.allow_commands).run(args.test_command, args.build_command)
+        if args.json:
+            print(json.dumps([r.__dict__ for r in results], indent=2))
+        else:
+            for result in results:
+                print(f'\n===== {result.stage.upper()} [{result.status.upper()}] =====\n{result.detail}\n')
+        return
+
+    if not args.request:
+        parser.error('a request is required unless --execute is used')
     request = ' '.join(args.request).strip()
     ctx = context(request)
     if args.autonomous:
