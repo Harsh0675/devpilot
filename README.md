@@ -1,77 +1,87 @@
 # 🚀 DevPilot
 
-**DevPilot v0.7.0** is an industry-oriented multi-agent AI software-engineering platform for **Windows, Linux, and macOS**. It combines project intelligence, safe code changes, multi-agent workflows, and a provider-neutral LLM runtime.
+**DevPilot v0.8.0** is an autonomous multi-agent AI software-engineering platform for **Windows, Linux, and macOS**. It combines project intelligence, persistent project memory, safe tool permissions, multi-agent workflows, and a provider-neutral LLM runtime.
 
-## ⬇️ Download
+## 🤖 Autonomous engineering
 
-**Latest releases:** https://github.com/Harsh0675/devpilot/releases/latest
+DevPilot can run a bounded engineering loop:
 
-### Desktop installers
+**Request → Architect → Planner → Implementer → Verifier**
 
-| Platform | Package |
-|---|---|
-| Windows x64 | `DevPilot-<version>-windows-x64-setup.exe` |
-| Linux x64 | `DevPilot-<version>-linux-x64.AppImage` |
-| Linux x64 | `DevPilot-<version>-linux-x64.tar.gz` |
-| macOS Intel | `DevPilot-<version>-devpilot-macos-x64.dmg` |
-| macOS Apple Silicon | `DevPilot-<version>-devpilot-macos-arm64.dmg` |
-
-All release packages include both **DevPilot** and **DevPilot Agent**. SHA-256 checksum files are published with every release.
-
-## 🤖 Multi-Agent Engineering
-
-DevPilot includes a deterministic production pipeline:
-
-**Planner → Coder → Reviewer → Tester**
-
-Each agent receives bounded repository context and the outputs of previous agents. This enables architecture planning, implementation proposals, security review, regression analysis, and verification planning as one workflow.
-
-Run it with:
+The loop produces an auditable plan and reviewable patch proposal. File writes, shell commands, and tests remain permission-gated instead of being silently executed.
 
 ```bash
-devpilot-agent "Add authentication with tests and secure configuration"
+devpilot-agent --autonomous "Add authentication with tests and secure configuration"
 ```
 
-Machine-readable output:
+Control the loop budget:
 
 ```bash
-devpilot-agent "Review this project for production risks" --json
+devpilot-agent --autonomous --max-steps 4 "Investigate and fix the failing build"
 ```
 
-## 🧠 LLM / Provider Support
+Machine-readable events:
 
-DevPilot uses a lightweight HTTP runtime with no mandatory vendor SDK dependency.
+```bash
+devpilot-agent --autonomous --json "Review this project for production risks"
+```
 
-### Native adapters
+## 🧠 Persistent project memory
+
+Autonomous runs maintain bounded project memory under `.devpilot/memory.json`. It records recent run summaries and durable project facts without placing secrets into the repository.
+
+## 🔐 Permission model
+
+DevPilot exposes explicit capabilities for agents:
+
+- read project files — allowed by default
+- search project — allowed by default
+- inspect Git — allowed by default
+- modify files — approval required
+- run tests — approval required
+- shell commands — approval required
+
+Path traversal outside the project root is rejected by the tool layer. Dangerous execution should remain behind explicit user/CI policy.
+
+## 🧩 Multi-agent pipeline
+
+The standard pipeline includes:
+
+**Architect → Planner → Coder → Security → Reviewer → Tester**
+
+Each stage receives bounded repository context and prior stage output, making architecture, implementation, security review, regression analysis, and verification part of one auditable workflow.
+
+## 🌐 LLM / Provider support
 
 - OpenAI-compatible APIs
 - Anthropic Messages API
 - Google Gemini API
 - Ollama local models
+- OpenRouter, Groq, Together, Mistral, DeepSeek, Qwen-compatible endpoints
+- Custom OpenAI-compatible gateways through `--base-url`
 
-### OpenAI-compatible ecosystem
+Example:
 
-The same interface can be used with compatible services such as OpenRouter, Groq, Together, Mistral, DeepSeek, Qwen-compatible endpoints, and self-hosted gateways by changing the base URL/model.
+```bash
+devpilot-agent --autonomous --provider ollama --model llama3 "Improve error handling"
+```
 
-## ✨ Production Capabilities
+## ✨ Production capabilities
 
-- 🪟 Windows x64 installer
+- 🪟 Windows x64 installer + portable package
 - 🐧 Linux x64 AppImage + tarball
-- 🍎 macOS Intel DMG
-- 🍎 macOS Apple Silicon DMG
-- 🤖 Multi-agent engineering pipeline
+- 🍎 macOS Apple Silicon package
+- 🍎 macOS Intel package when the GitHub runner is available
+- 🤖 Autonomous multi-agent engineering loop
 - 🧠 Provider-neutral LLM runtime
-- 🌐 Cloud and local model support
 - 📚 Bounded project context
+- 💾 Persistent project memory
+- 🔐 Explicit agent permissions
 - 🔍 Local source indexing/search
-- 💬 Interactive coding copilot
-- 🧭 Implementation planning
-- 🛠️ AI-generated unified diffs
-- 🔐 Human approval for writes by default
-- 🧪 Automated test/build workflow
+- 🛠️ Reviewable AI-generated unified diffs
+- 🧪 Test/build workflow integration
 - 🩺 Environment diagnostics
-- 🔒 API keys kept out of project files
-- 📦 Reproducible release packaging with SHA-256 checksums
+- 📦 Release packaging with SHA-256 checksums
 
 ## Existing copilot workflow
 
@@ -89,26 +99,7 @@ devpilot build
 
 ## Installation
 
-### Windows
-
-Run the `DevPilot-<version>-windows-x64-setup.exe` installer. It installs both `devpilot.exe` and `devpilot-agent.exe` and creates Start Menu shortcuts.
-
-### Linux
-
-For AppImage:
-
-```bash
-chmod +x DevPilot-<version>-linux-x64.AppImage
-./DevPilot-<version>-linux-x64.AppImage
-```
-
-The tarball contains the same standalone executables.
-
-### macOS
-
-Open the matching `.dmg` for Intel or Apple Silicon and copy `DevPilot.app` to Applications. The application bundle contains both DevPilot executables.
-
-### From source
+Download the latest native package from the GitHub Releases page, or install from source:
 
 ```bash
 python -m pip install -e .
@@ -118,14 +109,10 @@ python -m pip install -e .
 
 1. Repository context is bounded before it reaches an LLM.
 2. Secrets are read from environment variables.
-3. Agents do not silently modify files.
+3. Agent capabilities are explicitly permission-gated.
 4. Code changes are represented as reviewable patches.
-5. Existing DevPilot command permissions remain opt-in.
-6. Agent outputs are auditable and can be emitted as JSON for CI/orchestration.
-
-## Releases
-
-Tagged releases automatically build native Windows, Linux, and macOS packages using GitHub Actions and publish SHA-256 checksums.
+5. Project memory is stored under `.devpilot/` and excludes secret values.
+6. Agent outputs can be emitted as JSON for CI/orchestration.
 
 ## License
 
