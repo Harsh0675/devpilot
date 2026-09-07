@@ -3,8 +3,8 @@ import json
 import re
 from pathlib import Path
 
-from .agents import AgentOrchestrator
-from .llm import PROVIDERS
+from devpilot.agents import AgentOrchestrator
+from devpilot.llm import PROVIDERS
 
 IGNORE = {'.git', '.gradle', '.idea', 'build', '.devpilot', '__pycache__', '.venv', 'node_modules', 'dist', '.tox'}
 EXTENSIONS = {'.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.kt', '.kts', '.xml', '.json', '.md', '.txt', '.gradle', '.properties', '.yml', '.yaml', '.toml', '.sh', '.c', '.cpp', '.h', '.hpp', '.rs', '.go', '.swift', '.dart', '.sql'}
